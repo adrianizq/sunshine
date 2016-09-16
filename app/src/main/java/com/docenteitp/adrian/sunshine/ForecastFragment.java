@@ -14,15 +14,25 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Time;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by LENOVO26-ITP on 14/09/2016.
@@ -53,7 +63,11 @@ public  class ForecastFragment extends Fragment {
         //si esl el que tiene por id action_refresh
         if (id == R.id.action_refresh) {
             //crear la AsyncTask
+            //FetchWeatherTask weatherTask = new FetchWeatherTask();
             FetchWeatherTask weatherTask = new FetchWeatherTask();
+            weatherTask.execute("94043");
+
+
             //ejecutarla
             weatherTask.execute();
             return true;
@@ -101,6 +115,88 @@ public  class ForecastFragment extends Fragment {
     public class FetchWeatherTask extends AsyncTask<Void, Void, Void> {
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
+
+        private String getReadableDateString(long time){
+            // Because the API returns a unix timestamp (measured in seconds),
+            // it must be converted to milliseconds in order to be converted to valid date.
+            SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("EEE MMM dd");
+            return shortenedDateFormat.format(time);
+        }
+
+        /**
+         * Prepare the weather high/lows for presentation.
+         */
+        private String formatHighLows(double high, double low) {
+            // For presentation, assume the user doesn't care about tenths of a degree.
+            long roundedHigh = Math.round(high);
+            long roundedLow = Math.round(low);
+
+            String highLowStr = roundedHigh + "/" + roundedLow;
+            return highLowStr;
+        }
+
+        /**
+         * Take the String representing the complete forecast in JSON Format and
+         * pull out the data we need to construct the Strings needed for the wireframes.
+         *
+         * Fortunately parsing is easy:  constructor takes the JSON string and converts it
+         * into an Object hierarchy for us.
+         */
+        private String[] getWeatherDataFromJson(String forecastJsonStr, int numDays)
+                throws JSONException {
+
+            // These are the names of the JSON objects that need to be extracted.
+            final String OWM_LIST = "list";
+            final String OWM_WEATHER = "weather";
+            final String OWM_TEMPERATURE = "temp";
+            final String OWM_MAX = "max";
+            final String OWM_MIN = "min";
+            final String OWM_DESCRIPTION = "main";
+
+            JSONObject forecastJson = new JSONObject(forecastJsonStr);
+            JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
+
+            //Using the Gregorian Calendar Class instead of Time Class to get current date
+            Calendar gc = new GregorianCalendar();
+
+            String[] resultStrs = new String[numDays];
+
+            for(int i = 0; i < weatherArray.length(); i++) {
+                // For now, using the format "Day, description, hi/low" for the app display
+                String day;
+                String description;
+                String highAndLow;
+
+                // Get the JSON object representing the day
+                JSONObject dayForecast = weatherArray.getJSONObject(i);
+
+                //Converting the integer value returned by Calendar.DAY_OF_WEEK to
+                //a human-readable String
+                day = gc.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.ENGLISH);
+
+                //iterating to the next day
+                gc.add(Calendar.DAY_OF_WEEK, 1);
+
+                // description is in a child array called "weather", which is 1 element long.
+                JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
+                description = weatherObject.getString(OWM_DESCRIPTION);
+
+                // Temperatures are in a child object called "temp".
+                JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
+                double high = temperatureObject.getDouble(OWM_MAX);
+                double low = temperatureObject.getDouble(OWM_MIN);
+
+                highAndLow = formatHighLows(high, low);
+                resultStrs[i] = day + " - " + description + " - " + highAndLow;
+            }
+
+            for (String s : resultStrs) {
+                Log.v(LOG_TAG, "Forecast entry: " + s);
+            }
+            return resultStrs;
+
+        }
+
         @Override
         protected Void doInBackground(Void... params) {
             // These two need to be declared outside the try/catch
@@ -142,7 +238,7 @@ public  class ForecastFragment extends Fragment {
                 }
                 forecastJsonStr = buffer.toString();
               Log.v(LOG_TAG,"Cadena JSON Forecast : " + forecastJsonStr );
-//System.out.print(forecastJsonStr);
+
 
 
             } catch (IOException e) {
