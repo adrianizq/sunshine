@@ -1,5 +1,6 @@
 package com.docenteitp.adrian.sunshine;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,8 +13,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -78,7 +81,7 @@ public  class ForecastFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         // Create some dummy data for the ListView.  Here's a sample weekly forecast
-        String[] data = {
+        /*String[] data = {
                 "Mon 6/23 - Sunny - 31/17",
                 "Tue 6/24 - Foggy - 21/8",
                 "Wed 6/25 - Cloudy - 22/17",
@@ -86,8 +89,11 @@ public  class ForecastFragment extends Fragment {
                 "Fri 6/27 - Foggy - 21/10",
                 "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
                 "Sun 6/29 - Sunny - 20/7"
-        };
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
+        };*/
+       // final List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
+        final List<String> weekForecast = new ArrayList<String>();
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        weatherTask.execute("94043");
 
 
         // Now that we have some dummy forecast data, create an ArrayAdapter.
@@ -102,11 +108,24 @@ public  class ForecastFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        ListView listView = (ListView)rootView.findViewById(
+        final ListView listView = (ListView)rootView.findViewById(
                 R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);
+        //Nuevo
+        //Agregaremos un listener para cuando se haga click en algun item
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
+                Context context = getContext();
+                CharSequence text = mForecastAdapter.getItem(position);
+                int duration = Toast.LENGTH_SHORT;
+                Toast toast = Toast.makeText(context, text, duration);
+                toast.show();
 
+            }
+        });
+        ///Find los nuevos cambios
         return rootView;
     }
 
