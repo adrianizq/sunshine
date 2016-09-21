@@ -1,6 +1,7 @@
 package com.docenteitp.adrian.sunshine;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -69,9 +70,6 @@ public  class ForecastFragment extends Fragment {
             //crear la AsyncTask
             FetchWeatherTask weatherTask = new FetchWeatherTask();
             weatherTask.execute("94043");
-
-
-
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -117,11 +115,16 @@ public  class ForecastFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                Context context = getContext();
-                CharSequence text = mForecastAdapter.getItem(position);
-                int duration = Toast.LENGTH_SHORT;
-                Toast toast = Toast.makeText(context, text, duration);
-                toast.show();
+                //Context context = getContext();
+                //CharSequence text = mForecastAdapter.getItem(position);
+                //int duration = Toast.LENGTH_SHORT;
+                //Toast toast = Toast.makeText(context, text, duration);
+                //toast.show();
+
+                String forecast = mForecastAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(intent);
 
             }
         });
